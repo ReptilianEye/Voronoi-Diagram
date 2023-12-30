@@ -32,6 +32,7 @@ class Point:
             return self.y
 
 
+@dataclass
 class Edge:
     def __init__(self, start: Point, direction: Point):
         self.start = start
@@ -41,6 +42,9 @@ class Edge:
 
     def close_edge(self, end: Point):
         self.end = end
+
+    def __repr__(self):
+        return f"Edge(start={self.start}, dir=({self.direction.x:.3f}, {self.direction.y:.3f}))"
 
 
 class Arc:
@@ -153,7 +157,10 @@ class Arc:
 class Event:
     type: str
     point: Point = None
+
+    # cirle event needed
     node: Node = None
+    cirle_center_point: Point = None
     false_alarm: bool = False
 
 

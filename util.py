@@ -2,6 +2,10 @@
 from datatypes import Point
 
 
+def distance(p1: Point, p2: Point):
+    return ((p1.x - p2.x)**2 + (p1.y - p2.y)**2)**0.5
+
+
 def mat_det(a, b):
     return a[0] * b[1] - a[1] * b[0]
 
