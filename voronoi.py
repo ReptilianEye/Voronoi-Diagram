@@ -27,6 +27,10 @@ class Voronoi:
         margin_y = (max_y - min_y) * 0.1
         bottom_left = Point(min_x - margin_x, min_y - margin_y)
         top_right = Point(max_x + margin_x, max_y + margin_y)
+        self.edges_segments = [(bottom_left, Point(bottom_left.x, top_right.y)),
+                               (Point(bottom_left.x, top_right.y), top_right),
+                               (Point(top_right.x, bottom_left.y), top_right),
+                               (bottom_left, Point(top_right.x, bottom_left.y))]
         self.box = [bottom_left, top_right]
 
     def drawBox(self, plt):
@@ -43,7 +47,6 @@ class Voronoi:
         T = self.T
         D = self.D
         self.drawBox(plt)
-        plt.show()
 
         for p in self.points:
             Q.add(Event(SITE_EVENT, point=p))
@@ -55,9 +58,60 @@ class Voronoi:
                 self.handleSiteEvent(event.point)
             else:
                 self.handleCircleEvent(event)
-        T.print()
+
+        # T.print()
+        self.cropEdges()
+        self.finishEdges()
         for start, end in D:
-            print(start, end)
+            plt.plot([start.x, end.x], [start.y, end.y])
+        return plt
+
+    def isPointInBox(self, point: Point):
+        return self.box[0].x <= point.x <= self.box[1].x and self.box[0].y <= point.y <= self.box[1].y
+
+    def cropEdges(self):
+        for i in range(len(self.D)):
+            for j in range(2):
+                if not self.isPointInBox(self.D[i][j]):
+                    self.D[i] = self.finishEdgeWithBox(
+                        # Edge(*self.D[i])
+                        Edge(self.D[i][1-j], self.D[i][j])
+                    )
+            # if not self.isPointInBox(self.D[i][0]):
+            #     self.D[i] = self.finishEdgeWithBox(
+            #         # Edge(*self.D[i])
+            #         Edge(self.D[i][1], self.D[i][0])
+            #     )
+            # self.D[i] = self.finishEdgeWithBox(
+            #     # Edge(*self.D[i])
+            #     Edge(self.D[i][1], self.D[i][0])
+            # )
+
+    def finishEdges(self):
+        r = self.T.root
+        while r.left != None:
+            r = r.left
+        while r is not None:
+            if r.arc.edgeGoingLeft is not None and r.arc.edgeGoingLeft.end is None:
+                e = self.finishEdgeWithBox(r.arc.edgeGoingLeft)
+                if e:
+                    self.D.append(e)
+            if r.arc.edgeGoingRight is not None and r.arc.edgeGoingRight.end is None:
+                e = self.finishEdgeWithBox(r.arc.edgeGoingRight)
+                if e:
+                    self.D.append(e)
+            r = r.next
+
+    def finishEdgeWithBox(self, edge: Edge):
+        line_start = edge.start
+        direction = edge.direction
+        for start, end in self.edges_segments:
+            intersect = lineSegmentIntersect(start, end, line_start, direction)
+            if intersect:
+                edge.end = intersect
+                return (edge.start, edge.end)
+                # self.D.append((edge.start, edge.end))
+                # return
 
     def handleSiteEvent(self, p):
         T = self.T
