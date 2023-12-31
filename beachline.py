@@ -1,7 +1,5 @@
-from copy import deepcopy
 from util import *
 from datatypes import *
-from dataclasses import dataclass
 
 
 class Beachline:
@@ -11,7 +9,8 @@ class Beachline:
     def find_node(self, p: Point) -> Node:
         r = self.root
         while r.left or r.right:
-            if r.parabolaIntersectX() > p.x:
+            i = r.parabolaIntersectX()
+            if i > p.x:
                 r = r.left
             else:
                 r = r.right
@@ -39,9 +38,10 @@ class Beachline:
             if root.left == None and root.right == None:
                 # print(
                 # root.arc.focus, f"prev={root.prev.arc.focus if root.prev!=None else None}, next={root.next.arc.focus if root.next!=None else None}", end=" | ")
-                print(
-                    root.arc.focus, f"lefte: {root.arc.edgeGoingLeft} , righte: {root.arc.edgeGoingRight}", end=" |")
-
+                # print(
+                #     root.arc.focus, f"lefte: {root.arc.edgeGoingLeft} , righte: {root.arc.edgeGoingRight}", end=" | ")
+                # print(f"{root.arc.focus:.3f}", end=" | ")
+                print(root.arc.focus, end=" | ")
                 return
             if root.left != None:
                 print_r(root.left)

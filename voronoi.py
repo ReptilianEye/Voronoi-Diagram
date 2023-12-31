@@ -3,6 +3,7 @@ from beachline import Beachline
 from datatypes import *
 from util import *
 from matplotlib import pyplot as plt
+from myLL import myLL
 # beachline
 # insert, delete, find arc by x coordinate
 # Na razie może być linkedlita
@@ -12,7 +13,8 @@ class Voronoi:
     def __init__(self, points):
         self.points = list(map(lambda p: Point(*p), points))
         self.Q = PriorityQueue()
-        self.T = Beachline()
+        # self.T = Beachline()
+        self.T = myLL()
         self.D = []
         self.box = []
         self.init_box()
@@ -53,6 +55,8 @@ class Voronoi:
         # print(Q.heap)
         while Q:
             event = Q.pop()
+            if event.point.y < self.box[0].y:
+                break
             Arc.setDirectrix(event.point.y)
             if event.type == SITE_EVENT:
                 self.handleSiteEvent(event.point)
@@ -62,7 +66,7 @@ class Voronoi:
         # T.print()
         self.cropEdges()
         self.finishEdges()
-        for start, end in D:
+        for start, end in self.D:
             plt.plot([start.x, end.x], [start.y, end.y])
         return plt
 
@@ -77,20 +81,22 @@ class Voronoi:
                         # Edge(*self.D[i])
                         Edge(self.D[i][1-j], self.D[i][j])
                     )
-            # if not self.isPointInBox(self.D[i][0]):
-            #     self.D[i] = self.finishEdgeWithBox(
-            #         # Edge(*self.D[i])
-            #         Edge(self.D[i][1], self.D[i][0])
-            #     )
-            # self.D[i] = self.finishEdgeWithBox(
-            #     # Edge(*self.D[i])
-            #     Edge(self.D[i][1], self.D[i][0])
-            # )
+                    if self.D[i] is None:
+                        # self.D.pop(i)
+                        break
+        self.D = list(filter(lambda x: x is not None, self.D))
+        # if not self.isPointInBox(self.D[i][0]):
+        #     self.D[i] = self.finishEdgeWithBox(
+        #         # Edge(*self.D[i])
+        #         Edge(self.D[i][1], self.D[i][0])
+        #     )
+        # self.D[i] = self.finishEdgeWithBox(
+        #     # Edge(*self.D[i])
+        #     Edge(self.D[i][1], self.D[i][0])
+        # )
 
     def finishEdges(self):
-        r = self.T.root
-        while r.left != None:
-            r = r.left
+        r = self.T.head.next
         while r is not None:
             if r.arc.edgeGoingLeft is not None and r.arc.edgeGoingLeft.end is None:
                 e = self.finishEdgeWithBox(r.arc.edgeGoingLeft)
@@ -100,7 +106,24 @@ class Voronoi:
                 e = self.finishEdgeWithBox(r.arc.edgeGoingRight)
                 if e:
                     self.D.append(e)
-            r = r.next
+            if r.next is None:
+                break
+            r = self.T.rightNbour(r)
+
+    # def finishEdgesTree(self):
+    #     r = self.T.root
+    #     while r.left != None:
+    #         r = r.left
+    #     while r is not None:
+    #         if r.arc.edgeGoingLeft is not None and r.arc.edgeGoingLeft.end is None:
+    #             e = self.finishEdgeWithBox(r.arc.edgeGoingLeft)
+    #             if e:
+    #                 self.D.append(e)
+    #         if r.arc.edgeGoingRight is not None and r.arc.edgeGoingRight.end is None:
+    #             e = self.finishEdgeWithBox(r.arc.edgeGoingRight)
+    #             if e:
+    #                 self.D.append(e)
+    #         r = r.next
 
     def finishEdgeWithBox(self, edge: Edge):
         line_start = edge.start
@@ -149,6 +172,9 @@ class Voronoi:
         ar: Arc = rnode.arc
 
         point: Point = event.cirle_center_point
+
+        # if leaf.arc.circle_event != None:
+        #     Q.delete(leaf.arc.circle_event)
 
         closedLeft = leaf.arc.edgeGoingLeft
         closedRight = leaf.arc.edgeGoingRight

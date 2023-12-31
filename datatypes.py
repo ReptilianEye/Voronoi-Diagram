@@ -31,6 +31,9 @@ class Point:
         elif key == 1:
             return self.y
 
+    def __repr__(self):
+        return f"Point({self.x:.3f}, {self.y:.3f})"
+
 
 @dataclass
 class Edge:
