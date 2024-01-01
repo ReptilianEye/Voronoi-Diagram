@@ -55,7 +55,9 @@ class Voronoi:
         # print(Q.heap)
         while Q:
             event = Q.pop()
-            if event.point.y < self.box[0].y:
+            if event is None:
+                break
+            if event.type == CIRCLE_EVENT and event.cirle_center_point.y < self.box[0].y:
                 break
             Arc.setDirectrix(event.point.y)
             if event.type == SITE_EVENT:
@@ -64,8 +66,8 @@ class Voronoi:
                 self.handleCircleEvent(event)
 
         # T.print()
-        self.cropEdges()
         self.finishEdges()
+        self.cropEdges()
         for start, end in self.D:
             plt.plot([start.x, end.x], [start.y, end.y])
         return plt
@@ -76,6 +78,9 @@ class Voronoi:
     def cropEdges(self):
         for i in range(len(self.D)):
             for j in range(2):
+                if not self.isPointInBox(self.D[i][j]) and not self.isPointInBox(self.D[i][1-j]):
+                    self.D[i] = None
+                    break
                 if not self.isPointInBox(self.D[i][j]):
                     self.D[i] = self.finishEdgeWithBox(
                         # Edge(*self.D[i])

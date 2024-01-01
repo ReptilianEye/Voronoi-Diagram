@@ -41,6 +41,7 @@ class PriorityQueue(object):
                 if temp.node != None:
                     del self.events_to_nodes[temp.node]
                 return temp
+        return None
         raise KeyError('pop from an empty priority queue')
 
     def delete(self, item: Event):
@@ -49,4 +50,4 @@ class PriorityQueue(object):
         entry.false_alarm = True
 
     def __bool__(self):
-        return bool(self.heap)
+        return len(self.heap) > 0

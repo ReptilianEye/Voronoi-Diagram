@@ -15,3 +15,4 @@ points = [
 vor = Voronoi(points)
 plt = vor.get_voronoi()
 plt.show()
+print("done")
