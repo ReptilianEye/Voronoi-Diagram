@@ -24,8 +24,8 @@ class Voronoi:
         max_x = max(points, key=lambda p: p.x).x
         min_y = min(points, key=lambda p: p.y).y
         max_y = max(points, key=lambda p: p.y).y
-        margin_x = (max_x - min_x) * 0.1
-        margin_y = (max_y - min_y) * 0.1
+        margin_x = max(1, (max_x - min_x) * 0.1)
+        margin_y = max(1, (max_y - min_y) * 0.1)
         bottom_left = Point(min_x - margin_x, min_y - margin_y)
         top_right = Point(max_x + margin_x, max_y + margin_y)
         self.edges_segments = [(bottom_left, Point(bottom_left.x, top_right.y)),
@@ -52,8 +52,12 @@ class Voronoi:
         # self.T = Beachline()
         self.T = myLL()
         self.D = []
+        self.starts = {}
 
     def get_voronoi(self):
+        self.withVisualisation = False
+        voronoi_edges, box, _ = self.get_voronoi_visualised()
+        return voronoi_edges, box
         self.init_data()
         Q = self.Q
         T = self.T
@@ -76,34 +80,45 @@ class Voronoi:
                 self.handleCircleEvent(event)
 
         # T.print()
+        for e in self.starts.values():
+            self.D.append(e)
         self.finishEdges()
         self.cropEdges()
         voronoi_edges = [(start.x, start.y, end.x, end.y)
                          for start, end in self.D]
-        # return voronoi_edges, self.box
-        for start, end in self.D:
-            plt.plot([start.x, end.x], [start.y, end.y])
-        return plt
+        return voronoi_edges, self.box
+        # for start, end in self.D:
+        #     plt.plot([start.x, end.x], [start.y, end.y])
+        # return plt
 
     def get_voronoi_visualised(self):
+        self.withVisualisation = True
         self.init_data()
         Q = self.Q
         T = self.T
         D = self.D
-        self.vis = Visualizer()
-        vis = self.vis
-        self.drawBox()
+        if self.withVisualisation:
+            self.vis = Visualizer()
+            vis = self.vis
+            self.drawBox()
+        else:
+            self.vis = None
+        allVertical = len(set(map(lambda p: p.x, self.points))) == 1
+        if allVertical:
+            self.handleVerticalPoints()
+            return self.D, self.box, self.vis
         # self.vis.show_gif()
         # self.vis.show()
         for p in self.points:
             Q.add(Event(SITE_EVENT, point=p))
         # print(Q.heap)
-        min_x = self.box[0].x
-        max_x = self.box[1].x
-        broom = vis.add_line(
-            [(min_x, self.box[1].y), (max_x, self.box[1].y)], color="red")
-        parabolas = []
-        circles = []
+        if self.withVisualisation:
+            min_x = self.box[0].x
+            max_x = self.box[1].x
+            broom = vis.add_line(
+                [(min_x, self.box[1].y), (max_x, self.box[1].y)], color="red")
+            parabolas = []
+            circles = []
         while Q:
             event = Q.pop()
             if event is None:
@@ -113,27 +128,39 @@ class Voronoi:
                 #     continue
                 if event.cirle_center_point.y < self.box[0].y:
                     break
+                if event.cirle_center_point.x < self.box[0].x or event.cirle_center_point.x > self.box[1].x:
+                    continue
             y = event.point.y
             Arc.setDirectrix(y)
-            self.clear_last_vis(broom, parabolas, circles)
-            broom = vis.add_line(
-                [(min_x, y), (max_x, y)], color="red")
-            parabolas = self.drawParabolas()
+            if self.withVisualisation:
+                self.clear_last_vis(broom, parabolas, circles)
+                broom = vis.add_line(
+                    [(min_x, y), (max_x, y)], color="red")
+                parabolas = self.drawParabolas()
             if event.type == SITE_EVENT:
                 self.handleSiteEvent(event.point)
             else:
-                circle = vis.add_circle(
-                    (event.cirle_center_point.x, event.cirle_center_point.y, event.cirle_center_point.y - y), fill=False)
-                circles.append(circle)
+                if self.withVisualisation:
+                    circle = vis.add_circle(
+                        (event.cirle_center_point.x, event.cirle_center_point.y, event.cirle_center_point.y - y), fill=False)
+                    circles.append(circle)
+
                 self.handleCircleEvent(event)
-        self.clear_last_vis(broom, parabolas, circles)
+
+        if self.withVisualisation:
+            self.clear_last_vis(broom, parabolas, circles)
         # T.print()
+        for e in self.starts.values():
+            self.D.append(e)
         self.finishEdges()
         self.cropEdges()
-        for start, end in self.D:
-            vis.add_line_segment(((start.x, start.y), (end.x, end.y)))
+        voronoi_edges = [((start.x, start.y), (end.x, end.y))
+                         for start, end in self.D]
+        if self.withVisualisation:
+            for start, end in voronoi_edges:
+                vis.add_line_segment((start, end))
             # plt.plot([start.x, end.x], [start.y, end.y])
-        return vis
+        return voronoi_edges, self.box, vis
 
     def clear_last_vis(self, broom, parabolas, circles):
         self.vis.remove_figure(broom)
@@ -141,6 +168,8 @@ class Voronoi:
             self.vis.remove_figure(parabola)
         for circle in circles:
             self.vis.remove_figure(circle)
+        parabolas.clear()
+        circles.clear()
 
     def drawParabolas(self):
         drawnParabolas = []
@@ -186,6 +215,15 @@ class Voronoi:
         #     # Edge(*self.D[i])
         #     Edge(self.D[i][1], self.D[i][0])
         # )
+
+    def handleVerticalPoints(self):
+        points = sorted(self.points, key=lambda p: p.y)
+        for i in range(len(points)-1):
+            y = (points[i].y + points[i+1].y) / 2
+            edge = ((self.box[0].x, y), (self.box[1].x, y))
+            self.D.append(edge)
+            if self.withVisualisation:
+                self.vis.add_line_segment(edge)
 
     def finishEdges(self):
         r = self.T.head.next
@@ -273,8 +311,10 @@ class Voronoi:
 
         closedLeft.end = point
         closedRight.end = point
-        self.D.append((closedLeft.start, closedLeft.end))
-        self.D.append((closedRight.start, closedRight.end))
+        self.addToDiagram(closedLeft.start, closedLeft.end)
+        self.addToDiagram(closedRight.start, closedRight.end)
+        # self.D.append((closedLeft.start, closedLeft.end))
+        # self.D.append((closedRight.start, closedRight.end))
 
         al.setRightEdge(ar, point)
         # ar.setLeftEdge(al, point) # not needed because setRightEdge does it
@@ -289,3 +329,11 @@ class Voronoi:
             Q.add(left_circle_event)
         if right_circle_event != None:
             Q.add(right_circle_event)
+
+    def addToDiagram(self, start, end):
+        if start in self.starts:
+            e = self.starts[start]
+            self.D.append((e[1], end))
+            del self.starts[start]
+        else:
+            self.starts[start] = (start, end)

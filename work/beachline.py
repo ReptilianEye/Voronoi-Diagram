@@ -107,7 +107,7 @@ class Beachline:
         else:
             arc_node.parent.right = old_new_node
         self.update_next_prev()
-        self.print()
+        # self.print()
         return old_arc_leaf_l, old_arc_leaf_r
 
     def insert(self, p: Point):

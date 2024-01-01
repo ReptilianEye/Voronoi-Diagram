@@ -1,5 +1,5 @@
 from datatypes import *
-from TInterface import T
+from work.TInterface import T
 
 
 class MyBST(T):

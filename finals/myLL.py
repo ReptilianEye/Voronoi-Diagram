@@ -1,5 +1,5 @@
 from TInterface import T
-from datatypes import *
+from dataStructures import *
 from util import *
 
 
@@ -10,25 +10,20 @@ class myLL(T):
     def find_node(self, p):
         r = self.head.next
         while r.next is not None and r.next.parabolaIntersectX() < p.x:
-            # while r.arc_pair is not None:
-            #     r = r.next
-            # i = r.parabolaIntersectX()
-            # if i > p.x:
-            # return r.prev
             r = r.next.next
         return r
 
     def replace(self, arc_node: Arc, new_arc: Arc):
         arc = arc_node.arc
-        # new_arc.setEdgesWithHigher(arc)
         old_arc_l = Arc(arc.focus)
-        old_arc_r = Arc(arc.focus)  # deepcopy(arc)
+        old_arc_r = Arc(arc.focus)
         new_arc.setLeftEdge(old_arc_l)
         new_arc.setRightEdge(old_arc_r)
         old_arc_l.edgeGoingLeft = arc.edgeGoingLeft
         old_arc_r.edgeGoingRight = arc.edgeGoingRight
 
         #   old_arc_l -> old_new -> new_arc -> new_old -> old_arc_r
+
         old_new_node = Node()
         old_new_node.arc_pair = Pair(old_arc_l, new_arc)
 
@@ -64,19 +59,7 @@ class myLL(T):
         if arc_node.next != None:
             arc_node.next.prev = old_arc_leaf_r
             old_arc_leaf_r.next = arc_node.next
-        # old_arc_leaf_r.next = arc_node.next
-        # arc_node.next.prev = old_arc_leaf_r
 
-        # connect to tree
-        # old_new_node.parent = arc_node.parent
-        # if arc_node.parent == None:
-        #     self.root = old_new_node
-        # elif arc_node.parent.left == arc_node:
-        #     arc_node.parent.left = old_new_node
-        # else:
-        #     arc_node.parent.right = old_new_node
-        # self.update_next_prev()
-        self.print()
         return old_arc_leaf_l, old_arc_leaf_r
 
     def insert(self, p):
@@ -89,23 +72,12 @@ class myLL(T):
             return None, None, None
         node_to_replace = self.find_node(p)
 
-        # # remove circle event
-        # self.__removeCircleEvent(node_to_replace.arc)
-
         left_arc_node, right_arc_node = self.replace(node_to_replace, arc)
 
         left_circle_event = self.checkForCircleEvent(left_arc_node)
         right_circle_event = self.checkForCircleEvent(right_arc_node)
 
         return node_to_replace, left_circle_event, right_circle_event
-
-    def print(self):
-        r = self.head.next
-        while r is not None:
-            if r.arc_pair is None:
-                print(r.arc.focus, end="->")
-            r = r.next
-        print()
 
     def handleSquize(self, arc_node):
         al = self.leftNbour(arc_node)
@@ -118,9 +90,8 @@ class myLL(T):
         intersect.arc_pair = Pair(al.arc, ar.arc)
 
         self.replaceRemove(arc_node, intersect)
-        self.print()
-        left_circle_event = self.checkForCircleEvent(al)
 
+        left_circle_event = self.checkForCircleEvent(al)
         right_circle_event = self.checkForCircleEvent(ar)
 
         return left_circle_event, right_circle_event
@@ -131,16 +102,11 @@ class myLL(T):
         if circle_event_point != None:
             circle_event = Event(
                 CIRCLE_EVENT, point=circle_event_point, cirle_center_point=circle_center_point, node=node)
-            # right_circle_event = Event(right_circle_event_point, 'circle')
             node.arc.circle_event = circle_event
 
         return circle_event
 
     def isCirleEvent(self, arc_node: Node):
-        # left = self.leftNbour(arc_node)
-        # right = self.rightNbour(arc_node)
-        # if left == None or right == None:
-        #     return
         leftEdge = arc_node.arc.edgeGoingLeft
         rightEdge = arc_node.arc.edgeGoingRight
         if leftEdge == None or rightEdge == None:
@@ -164,3 +130,11 @@ class myLL(T):
         newPair.next = node.next.next
         node.prev.prev.next = newPair
         node.next.next.prev = newPair
+
+    def print(self):
+        r = self.head.next
+        while r is not None:
+            if r.arc_pair is None:
+                print(r.arc.focus, end="->")
+            r = r.next
+        print()
