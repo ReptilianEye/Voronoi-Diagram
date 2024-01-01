@@ -4,6 +4,7 @@ from datatypes import *
 from util import *
 from matplotlib import pyplot as plt
 from myLL import myLL
+from visualizer.main import Visualizer
 # beachline
 # insert, delete, find arc by x coordinate
 # Na razie może być linkedlita
@@ -12,12 +13,10 @@ from myLL import myLL
 class Voronoi:
     def __init__(self, points):
         self.points = list(map(lambda p: Point(*p), points))
-        self.Q = PriorityQueue()
-        # self.T = Beachline()
-        self.T = myLL()
-        self.D = []
+
         self.box = []
         self.init_box()
+        # self.vis = Visualizer()
 
     def init_box(self):
         points = self.points
@@ -35,20 +34,31 @@ class Voronoi:
                                (bottom_left, Point(top_right.x, bottom_left.y))]
         self.box = [bottom_left, top_right]
 
-    def drawBox(self, plt):
+    def drawBox(self):
         box = self.box
         x_box = list(
             map(lambda x: x.x, [box[0], box[0], box[1], box[1], box[0]]))
         y_box = list(
             map(lambda x: x.y, [box[0], box[1], box[1], box[0], box[0]]))
-        plt.plot(x_box, y_box, color="black")
-        plt.scatter([p.x for p in self.points], [p.y for p in self.points])
+
+        self.vis.add_polygon([(x_box[i], y_box[i])
+                             for i in range(len(x_box))], fill=False, color="black")
+        self.vis.add_point([(p.x, p.y) for p in self.points])
+        # plt.plot(x_box, y_box, color="black")
+        # plt.scatter([p.x for p in self.points], [p.y for p in self.points])
+
+    def init_data(self):
+        self.Q = PriorityQueue()
+        # self.T = Beachline()
+        self.T = myLL()
+        self.D = []
 
     def get_voronoi(self):
+        self.init_data()
         Q = self.Q
         T = self.T
         D = self.D
-        self.drawBox(plt)
+        # self.drawBox(plt)
 
         for p in self.points:
             Q.add(Event(SITE_EVENT, point=p))
@@ -68,9 +78,86 @@ class Voronoi:
         # T.print()
         self.finishEdges()
         self.cropEdges()
+        voronoi_edges = [(start.x, start.y, end.x, end.y)
+                         for start, end in self.D]
+        # return voronoi_edges, self.box
         for start, end in self.D:
             plt.plot([start.x, end.x], [start.y, end.y])
         return plt
+
+    def get_voronoi_visualised(self):
+        self.init_data()
+        Q = self.Q
+        T = self.T
+        D = self.D
+        self.vis = Visualizer()
+        vis = self.vis
+        self.drawBox()
+        # self.vis.show_gif()
+        # self.vis.show()
+        for p in self.points:
+            Q.add(Event(SITE_EVENT, point=p))
+        # print(Q.heap)
+        min_x = self.box[0].x
+        max_x = self.box[1].x
+        broom = vis.add_line(
+            [(min_x, self.box[1].y), (max_x, self.box[1].y)], color="red")
+        parabolas = []
+        circles = []
+        while Q:
+            event = Q.pop()
+            if event is None:
+                break
+            if event.type == CIRCLE_EVENT:
+                # if event.cirle_center_point.y > self.box[1].y:
+                #     continue
+                if event.cirle_center_point.y < self.box[0].y:
+                    break
+            y = event.point.y
+            Arc.setDirectrix(y)
+            self.clear_last_vis(broom, parabolas, circles)
+            broom = vis.add_line(
+                [(min_x, y), (max_x, y)], color="red")
+            parabolas = self.drawParabolas()
+            if event.type == SITE_EVENT:
+                self.handleSiteEvent(event.point)
+            else:
+                circle = vis.add_circle(
+                    (event.cirle_center_point.x, event.cirle_center_point.y, event.cirle_center_point.y - y), fill=False)
+                circles.append(circle)
+                self.handleCircleEvent(event)
+        self.clear_last_vis(broom, parabolas, circles)
+        # T.print()
+        self.finishEdges()
+        self.cropEdges()
+        for start, end in self.D:
+            vis.add_line_segment(((start.x, start.y), (end.x, end.y)))
+            # plt.plot([start.x, end.x], [start.y, end.y])
+        return vis
+
+    def clear_last_vis(self, broom, parabolas, circles):
+        self.vis.remove_figure(broom)
+        for parabola in parabolas:
+            self.vis.remove_figure(parabola)
+        for circle in circles:
+            self.vis.remove_figure(circle)
+
+    def drawParabolas(self):
+        drawnParabolas = []
+        drawn = set()
+        T = self.T
+        vis = self.vis
+        r = T.head.next
+        while r is not None:
+            arc = r.arc
+            if arc.focus not in drawn:
+                parabola = arc.draw(vis, self.box)
+                drawnParabolas.append(parabola)
+                drawn.add(arc.focus)
+            if r.next is None:
+                break
+            r = T.rightNbour(r)
+        return drawnParabolas
 
     def isPointInBox(self, point: Point):
         return self.box[0].x <= point.x <= self.box[1].x and self.box[0].y <= point.y <= self.box[1].y

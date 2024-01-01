@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from numpy import sqrt
+from numpy import sqrt, linspace
 # from beachline import Node
 
 SITE_EVENT = 'site'
@@ -133,6 +133,12 @@ class Arc:
         # self.directrix = directrix
         # self.updateABC()
         return [self.__unit_val(x) for x in x]
+
+    def draw(self, vis, box):
+        x = linspace(box[0].x, box[1].x, 1000)
+        parabolasPoints = list(filter(
+            lambda point: point[1] < box[1].y, list(zip(x, self.value(x)))))
+        return vis.add_point(parabolasPoints, s=0.1)
 
     def lookForIntersectionBetween(self, right_arc):
         prevDirectrix = self.directrix

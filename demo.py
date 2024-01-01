@@ -13,6 +13,6 @@ points = [
     [8.95603584, -9.51014394],
 ]
 vor = Voronoi(points)
-plt = vor.get_voronoi()
+plt = vor.get_voronoi_visualised()
 plt.show()
 print("done")
