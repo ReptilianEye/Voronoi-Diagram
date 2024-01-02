@@ -12,23 +12,25 @@ class PriorityQueue(object):
 
     def __init__(self, items=[]):
         self.heap = []
-        self.entries = {}
+        self.events_to_nodes = {}
         # self.counter = itertools.count(0,-1)
         for i in items:
             self.add(i)
 
-    def add(self, item: Event):
+    def add(self, event: Event):
         # Check for duplicate
-        if item.point in self.entries:
-            return
+
+        if event.node != None and self.events_to_nodes.get(event.node) != None:
+            self.delete(self.events_to_nodes.get(event.node))
 
         # count = next(self.counter)
         # use negative y-coordinate as a primary key
         # heapq in python is min-heap and we need max-heap
         # print("heapAdd: " + str(item[0]))
-        entry = [-item.point.y, item]
+        entry = [-event.point.y, event]
         # entry = [item[0][1]*-1, count, item]
-        self.entries[item.point] = item
+        if event.node != None:
+            self.events_to_nodes[event.node] = event
         heapq.heappush(self.heap, entry)
 
     def pop(self):
@@ -36,14 +38,16 @@ class PriorityQueue(object):
             temp: Event = heapq.heappop(self.heap)[1]
             # print "pop" + str(temp[2][0])
             if not temp.false_alarm:
-                del self.entries[temp.point]
+                if temp.node != None:
+                    del self.events_to_nodes[temp.node]
                 return temp
+        return None
         raise KeyError('pop from an empty priority queue')
 
     def delete(self, item: Event):
         # print ("delete: " + str(item[0]))
-        entry = self.entries.pop(item.point)
+        entry = self.events_to_nodes.pop(item.node)
         entry.false_alarm = True
 
     def __bool__(self):
-        return bool(self.heap)
+        return len(self.heap) > 0

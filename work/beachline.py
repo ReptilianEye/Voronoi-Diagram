@@ -1,7 +1,5 @@
-from copy import deepcopy
-from util import getIntersect
+from util import *
 from datatypes import *
-from dataclasses import dataclass
 
 
 class Beachline:
@@ -11,7 +9,8 @@ class Beachline:
     def find_node(self, p: Point) -> Node:
         r = self.root
         while r.left or r.right:
-            if r.parabolaIntersectX() > p.x:
+            i = r.parabolaIntersectX()
+            if i > p.x:
                 r = r.left
             else:
                 r = r.right
@@ -37,8 +36,12 @@ class Beachline:
     def print(self):
         def print_r(root):
             if root.left == None and root.right == None:
-                print(
-                    root.arc.focus, f"prev={root.prev.arc.focus if root.prev!=None else None}, next={root.next.arc.focus if root.next!=None else None}", end=" | ")
+                # print(
+                # root.arc.focus, f"prev={root.prev.arc.focus if root.prev!=None else None}, next={root.next.arc.focus if root.next!=None else None}", end=" | ")
+                # print(
+                #     root.arc.focus, f"lefte: {root.arc.edgeGoingLeft} , righte: {root.arc.edgeGoingRight}", end=" | ")
+                # print(f"{root.arc.focus:.3f}", end=" | ")
+                print(root.arc.focus, end=" | ")
                 return
             if root.left != None:
                 print_r(root.left)
@@ -104,7 +107,7 @@ class Beachline:
         else:
             arc_node.parent.right = old_new_node
         self.update_next_prev()
-        self.print()
+        # self.print()
         return old_arc_leaf_l, old_arc_leaf_r
 
     def insert(self, p: Point):
@@ -143,11 +146,11 @@ class Beachline:
         return left_circle_event, right_circle_event
 
     def checkForCircleEvent(self, node):
-        circle_event_point = self.isCirleEvent(node)
+        circle_center_point, circle_event_point = self.isCirleEvent(node)
         circle_event = None
         if circle_event_point != None:
             circle_event = Event(
-                CIRCLE_EVENT, point=circle_event_point, node=node)
+                CIRCLE_EVENT, point=circle_event_point, cirle_center_point=circle_center_point, node=node)
             # right_circle_event = Event(right_circle_event_point, 'circle')
             node.arc.circle_event = circle_event
 
@@ -161,10 +164,14 @@ class Beachline:
         leftEdge = arc_node.arc.edgeGoingLeft
         rightEdge = arc_node.arc.edgeGoingRight
         if leftEdge == None or rightEdge == None:
-            return
-        inter = getIntersect(leftEdge.start, leftEdge.direction,
-                             rightEdge.start, rightEdge.direction)
-        return inter
+            return None, None
+        cirle_center = getIntersect(leftEdge.start, leftEdge.direction,
+                                    rightEdge.start, rightEdge.direction)
+        if cirle_center == None:
+            return None, None
+        circle_event_point = Point(
+            cirle_center[0], cirle_center[1] - distance(cirle_center, arc_node.next.arc.focus))
+        return cirle_center, circle_event_point
 
     def leftNbour(self, node):
         return node.prev
