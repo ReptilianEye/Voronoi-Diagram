@@ -4,8 +4,6 @@ class T:
 
     def find_node(self, p):
         self
-    # def update_next_prev(self):
-    #     self
 
     def replace(self, old_node):
         self

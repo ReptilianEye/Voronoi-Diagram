@@ -63,17 +63,15 @@ class Arc:
         self.b = None
         self.c = None
         if self.directrix is not None:
-            self.updateABC()
+            self.__updateABC()
         self.__class__.objects.append(self)
 
-    def setRightEdge(self, side_arc, start=None):
-        if start is None:
-            start_x = self.focus.x
-            start = Point(start_x, side_arc.__unit_val(start_x))
-        right_intersection = self.lookForIntersectionBetween(side_arc)
-        rightEdge = Edge(start, right_intersection)
-        side_arc.edgeGoingLeft = rightEdge
-        self.edgeGoingRight = rightEdge
+    @classmethod
+    def setDirectrix(cls, directrix, all=True):
+        cls.directrix = directrix
+        if all:
+            for obj in cls.objects:
+                obj.updateABC()
 
     def setLeftEdge(self, side_arc, start=None):
         if start is None:
@@ -85,14 +83,16 @@ class Arc:
         side_arc.edgeGoingRight = leftEdge
         self.edgeGoingLeft = leftEdge
 
-    @classmethod
-    def setDirectrix(cls, directrix, all=True):
-        cls.directrix = directrix
-        if all:
-            for obj in cls.objects:
-                obj.updateABC()
+    def setRightEdge(self, side_arc, start=None):
+        if start is None:
+            start_x = self.focus.x
+            start = Point(start_x, side_arc.__unit_val(start_x))
+        right_intersection = self.lookupForIntersectionBetween(side_arc)
+        rightEdge = Edge(start, right_intersection)
+        side_arc.edgeGoingLeft = rightEdge
+        self.edgeGoingRight = rightEdge
 
-    def updateABC(self):
+    def __updateABC(self):
         if self.focus.y == self.directrix:
             return
         f = abs(self.focus.y - self.directrix)/2.0
@@ -115,19 +115,19 @@ class Arc:
             lambda point: point[1] < box[1].y, list(zip(x, self.value(x)))))
         return vis.add_point(parabolasPoints, s=0.1)
 
-    def lookForIntersectionBetween(self, right_arc):
+    def lookupForIntersectionBetween(self, right_arc):
         prevDirectrix = self.directrix
         self.setDirectrix(prevDirectrix-1, False)
-        self.updateABC()
+        self.__updateABC()
         right_arc.updateABC()
         found_intersect = self.intersect(right_arc)
         self.setDirectrix(prevDirectrix, False)
-        self.updateABC()
+        self.__updateABC()
         right_arc.updateABC()
         return found_intersect
 
     def lookupIntersectionsWithHigher(self, higher):
-        return higher.lookForIntersectionBetween(self), self.lookForIntersectionBetween(higher)
+        return higher.lookForIntersectionBetween(self), self.lookupForIntersectionBetween(higher)
 
     def intersect(self, arc) -> Point:
         a = self.a - arc.a

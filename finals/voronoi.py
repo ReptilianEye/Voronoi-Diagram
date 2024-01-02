@@ -1,7 +1,6 @@
-from priorityqueue import PriorityQueue
+from priorityQueue import PriorityQueue
 from dataStructures import *
 from util import *
-from matplotlib import pyplot as plt
 from myLL import myLL
 from visualizer.main import Visualizer
 
@@ -11,9 +10,9 @@ class Voronoi:
         self.points = list(map(lambda p: Point(*p), points))
 
         self.box = []
-        self.init_box()
+        self.__init_box()
 
-    def init_box(self):
+    def __init_box(self):
         points = self.points
         min_x = min(points, key=lambda p: p.x).x
         max_x = max(points, key=lambda p: p.x).x
@@ -29,7 +28,7 @@ class Voronoi:
                                (bottom_left, Point(top_right.x, bottom_left.y))]
         self.box = [bottom_left, top_right]
 
-    def drawBox(self):
+    def __drawBox(self):
         box = self.box
         x_box = list(
             map(lambda x: x.x, [box[0], box[0], box[1], box[1], box[0]]))
@@ -40,7 +39,7 @@ class Voronoi:
                              for i in range(len(x_box))], fill=False, color="black")
         self.vis.add_point([(p.x, p.y) for p in self.points])
 
-    def init_data(self):
+    def __init_data(self):
         self.Q = PriorityQueue()
         # self.T = Beachline()
         self.T = myLL()
@@ -54,17 +53,17 @@ class Voronoi:
 
     def get_voronoi_visualised(self):
         self.withVisualisation = True
-        self.init_data()
+        self.__init_data()
         Q = self.Q
         if self.withVisualisation:
             self.vis = Visualizer()
             vis = self.vis
-            self.drawBox()
+            self.__drawBox()
         else:
             self.vis = None
         allVertical = len(set(map(lambda p: p.x, self.points))) == 1
         if allVertical:
-            self.handleVerticalPoints()
+            self.__handleVerticalPoints()
             return self.D, self.box, self.vis
 
         for p in self.points:
@@ -91,26 +90,26 @@ class Voronoi:
             y = event.point.y
             Arc.setDirectrix(y)
             if self.withVisualisation:
-                self.clear_last_vis(broom, parabolas, circles)
+                self.__clear_last_vis(broom, parabolas, circles)
                 broom = vis.add_line(
                     [(min_x, y), (max_x, y)], color="red")
-                parabolas = self.drawParabolas()
+                parabolas = self.__drawParabolas()
             if event.type == SITE_EVENT:
-                self.handleSiteEvent(event.point)
+                self.__handleSiteEvent(event.point)
             else:
                 if self.withVisualisation:
                     circle = vis.add_circle(
                         (event.cirle_center_point.x, event.cirle_center_point.y, event.cirle_center_point.y - y), fill=False)
                     circles.append(circle)
 
-                self.handleCircleEvent(event)
+                self.__handleCircleEvent(event)
 
         if self.withVisualisation:
-            self.clear_last_vis(broom, parabolas, circles)
+            self.__clear_last_vis(broom, parabolas, circles)
         for e in self.starts.values():
             self.D.append(e)
-        self.finishEdges()
-        self.cropEdges()
+        self.__finishEdges()
+        self.__cropEdges()
         voronoi_edges = [((start.x, start.y), (end.x, end.y))
                          for start, end in self.D]
         if self.withVisualisation:
@@ -118,87 +117,7 @@ class Voronoi:
                 vis.add_line_segment((start, end))
         return voronoi_edges, self.box, vis
 
-    def clear_last_vis(self, broom, parabolas, circles):
-        self.vis.remove_figure(broom)
-        for parabola in parabolas:
-            self.vis.remove_figure(parabola)
-        for circle in circles:
-            self.vis.remove_figure(circle)
-        parabolas.clear()
-        circles.clear()
-
-    def drawParabolas(self):
-        drawnParabolas = []
-        drawn = set()
-        T = self.T
-        vis = self.vis
-        r = T.head.next
-        while r is not None:
-            arc = r.arc
-            if arc.focus not in drawn:
-                parabola = arc.draw(vis, self.box)
-                drawnParabolas.append(parabola)
-                drawn.add(arc.focus)
-            if r.next is None:
-                break
-            r = T.rightNbour(r)
-        return drawnParabolas
-
-    def isPointInBox(self, point: Point):
-        return self.box[0].x <= point.x <= self.box[1].x and self.box[0].y <= point.y <= self.box[1].y
-
-    def cropEdges(self):
-        for i in range(len(self.D)):
-            for j in range(2):
-                if not self.isPointInBox(self.D[i][j]) and not self.isPointInBox(self.D[i][1-j]):
-                    self.D[i] = None
-                    break
-                if not self.isPointInBox(self.D[i][j]):
-                    self.D[i] = self.finishEdgeWithBox(
-                        # Edge(*self.D[i])
-                        Edge(self.D[i][1-j], self.D[i][j])
-                    )
-                    if self.D[i] is None:
-                        # self.D.pop(i)
-                        break
-        self.D = list(filter(lambda x: x is not None, self.D))
-
-    def handleVerticalPoints(self):
-        points = sorted(self.points, key=lambda p: p.y)
-        for i in range(len(points)-1):
-            y = (points[i].y + points[i+1].y) / 2
-            edge = ((self.box[0].x, y), (self.box[1].x, y))
-            self.D.append(edge)
-            if self.withVisualisation:
-                self.vis.add_line_segment(edge)
-
-    def finishEdges(self):
-        r = self.T.head.next
-        while r is not None:
-            if r.arc.edgeGoingLeft is not None and r.arc.edgeGoingLeft.end is None:
-                e = self.finishEdgeWithBox(r.arc.edgeGoingLeft)
-                if e:
-                    self.D.append(e)
-            if r.arc.edgeGoingRight is not None and r.arc.edgeGoingRight.end is None:
-                e = self.finishEdgeWithBox(r.arc.edgeGoingRight)
-                if e:
-                    self.D.append(e)
-            if r.next is None:
-                break
-            r = self.T.rightNbour(r)
-
-    def finishEdgeWithBox(self, edge: Edge):
-        line_start = edge.start
-        direction = edge.direction
-        for start, end in self.edges_segments:
-            intersect = lineSegmentIntersect(start, end, line_start, direction)
-            if intersect:
-                edge.end = intersect
-                return (edge.start, edge.end)
-                # self.D.append((edge.start, edge.end))
-                # return
-
-    def handleSiteEvent(self, p):
+    def __handleSiteEvent(self, p):
         T = self.T
         Q = self.Q
         D = self.D
@@ -215,7 +134,7 @@ class Voronoi:
         if right_circle_event != None:
             Q.add(right_circle_event)
 
-    def handleCircleEvent(self, event):
+    def __handleCircleEvent(self, event):
         T = self.T
         Q = self.Q
         leaf: Node = event.node
@@ -231,8 +150,8 @@ class Voronoi:
 
         closedLeft.end = point
         closedRight.end = point
-        self.addToDiagram(closedLeft.start, closedLeft.end)
-        self.addToDiagram(closedRight.start, closedRight.end)
+        self.__addToDiagram(closedLeft.start, closedLeft.end)
+        self.__addToDiagram(closedRight.start, closedRight.end)
 
         al.setRightEdge(ar, point)
 
@@ -242,7 +161,87 @@ class Voronoi:
         if right_circle_event != None:
             Q.add(right_circle_event)
 
-    def addToDiagram(self, start, end):
+    def __clear_last_vis(self, broom, parabolas, circles):
+        self.vis.remove_figure(broom)
+        for parabola in parabolas:
+            self.vis.remove_figure(parabola)
+        for circle in circles:
+            self.vis.remove_figure(circle)
+        parabolas.clear()
+        circles.clear()
+
+    def __drawParabolas(self):
+        drawnParabolas = []
+        drawn = set()
+        T = self.T
+        vis = self.vis
+        r = T.head.next
+        while r is not None:
+            arc = r.arc
+            if arc.focus not in drawn:
+                parabola = arc.draw(vis, self.box)
+                drawnParabolas.append(parabola)
+                drawn.add(arc.focus)
+            if r.next is None:
+                break
+            r = T.rightNbour(r)
+        return drawnParabolas
+
+    def __isPointInBox(self, point: Point):
+        return self.box[0].x <= point.x <= self.box[1].x and self.box[0].y <= point.y <= self.box[1].y
+
+    def __cropEdges(self):
+        for i in range(len(self.D)):
+            for j in range(2):
+                if not self.__isPointInBox(self.D[i][j]) and not self.__isPointInBox(self.D[i][1-j]):
+                    self.D[i] = None
+                    break
+                if not self.__isPointInBox(self.D[i][j]):
+                    self.D[i] = self.__finishEdgeWithBox(
+                        # Edge(*self.D[i])
+                        Edge(self.D[i][1-j], self.D[i][j])
+                    )
+                    if self.D[i] is None:
+                        # self.D.pop(i)
+                        break
+        self.D = list(filter(lambda x: x is not None, self.D))
+
+    def __handleVerticalPoints(self):
+        points = sorted(self.points, key=lambda p: p.y)
+        for i in range(len(points)-1):
+            y = (points[i].y + points[i+1].y) / 2
+            edge = ((self.box[0].x, y), (self.box[1].x, y))
+            self.D.append(edge)
+            if self.withVisualisation:
+                self.vis.add_line_segment(edge)
+
+    def __finishEdges(self):
+        r = self.T.head.next
+        while r is not None:
+            if r.arc.edgeGoingLeft is not None and r.arc.edgeGoingLeft.end is None:
+                e = self.__finishEdgeWithBox(r.arc.edgeGoingLeft)
+                if e:
+                    self.D.append(e)
+            if r.arc.edgeGoingRight is not None and r.arc.edgeGoingRight.end is None:
+                e = self.__finishEdgeWithBox(r.arc.edgeGoingRight)
+                if e:
+                    self.D.append(e)
+            if r.next is None:
+                break
+            r = self.T.rightNbour(r)
+
+    def __finishEdgeWithBox(self, edge: Edge):
+        line_start = edge.start
+        direction = edge.direction
+        for start, end in self.edges_segments:
+            intersect = lineSegmentIntersect(start, end, line_start, direction)
+            if intersect:
+                edge.end = intersect
+                return (edge.start, edge.end)
+                # self.D.append((edge.start, edge.end))
+                # return
+
+    def __addToDiagram(self, start, end):
         if start in self.starts:
             e = self.starts[start]
             self.D.append((e[1], end))

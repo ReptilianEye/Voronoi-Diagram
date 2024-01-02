@@ -79,23 +79,6 @@ class myLL(T):
 
         return node_to_replace, left_circle_event, right_circle_event
 
-    def handleSquize(self, arc_node):
-        al = self.leftNbour(arc_node)
-        ar = self.rightNbour(arc_node)
-
-        al.next.arc_pair.right = ar.arc
-        ar.prev.arc_pair.left = al.arc
-
-        intersect = Node()
-        intersect.arc_pair = Pair(al.arc, ar.arc)
-
-        self.replaceRemove(arc_node, intersect)
-
-        left_circle_event = self.checkForCircleEvent(al)
-        right_circle_event = self.checkForCircleEvent(ar)
-
-        return left_circle_event, right_circle_event
-
     def checkForCircleEvent(self, node):
         circle_center_point, circle_event_point = self.isCirleEvent(node)
         circle_event = None
@@ -119,17 +102,34 @@ class myLL(T):
             cirle_center[0], cirle_center[1] - distance(cirle_center, self.rightNbour(arc_node).arc.focus))
         return cirle_center, circle_event_point
 
+    def handleSquize(self, arc_node):
+        al = self.leftNbour(arc_node)
+        ar = self.rightNbour(arc_node)
+
+        al.next.arc_pair.right = ar.arc
+        ar.prev.arc_pair.left = al.arc
+
+        intersect = Node()
+        intersect.arc_pair = Pair(al.arc, ar.arc)
+
+        self.__replaceRemove(arc_node, intersect)
+
+        left_circle_event = self.checkForCircleEvent(al)
+        right_circle_event = self.checkForCircleEvent(ar)
+
+        return left_circle_event, right_circle_event
+
+    def __replaceRemove(self, node, newPair):
+        newPair.prev = node.prev.prev
+        newPair.next = node.next.next
+        node.prev.prev.next = newPair
+        node.next.next.prev = newPair
+
     def leftNbour(self, node):
         return node.prev.prev
 
     def rightNbour(self, node):
         return node.next.next
-
-    def replaceRemove(self, node, newPair):
-        newPair.prev = node.prev.prev
-        newPair.next = node.next.next
-        node.prev.prev.next = newPair
-        node.next.next.prev = newPair
 
     def print(self):
         r = self.head.next

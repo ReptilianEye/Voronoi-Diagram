@@ -3,11 +3,6 @@ from dataStructures import Event
 
 
 class PriorityQueue(object):
-    '''
-    Creates Priority queue to use with Fortunes's algorithm
-    item is a tuple of ((x,y), pointer_to_leaf)
-    '''
-
     def __init__(self, items=[]):
         self.heap = []
         self.events_to_nodes = {}
