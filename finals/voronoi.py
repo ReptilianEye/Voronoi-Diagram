@@ -238,8 +238,6 @@ class Voronoi:
             if intersect:
                 edge.end = intersect
                 return (edge.start, edge.end)
-                # self.D.append((edge.start, edge.end))
-                # return
 
     def __addToDiagram(self, start, end):
         if start in self.starts:
