@@ -63,7 +63,7 @@ class Arc:
         self.b = None
         self.c = None
         if self.directrix is not None:
-            self.__updateABC()
+            self.updateABC()
         self.__class__.objects.append(self)
 
     @classmethod
@@ -78,7 +78,7 @@ class Arc:
             start_x = self.focus.x
             start = Point(start_x, side_arc.__unit_val(start_x))
 
-        left_intersection = side_arc.lookForIntersectionBetween(self)
+        left_intersection = side_arc.lookupForIntersectionBetween(self)
         leftEdge = Edge(start, left_intersection)
         side_arc.edgeGoingRight = leftEdge
         self.edgeGoingLeft = leftEdge
@@ -92,7 +92,7 @@ class Arc:
         side_arc.edgeGoingLeft = rightEdge
         self.edgeGoingRight = rightEdge
 
-    def __updateABC(self):
+    def updateABC(self):
         if self.focus.y == self.directrix:
             return
         f = abs(self.focus.y - self.directrix)/2.0
@@ -118,11 +118,11 @@ class Arc:
     def lookupForIntersectionBetween(self, right_arc):
         prevDirectrix = self.directrix
         self.setDirectrix(prevDirectrix-1, False)
-        self.__updateABC()
+        self.updateABC()
         right_arc.updateABC()
         found_intersect = self.intersect(right_arc)
         self.setDirectrix(prevDirectrix, False)
-        self.__updateABC()
+        self.updateABC()
         right_arc.updateABC()
         return found_intersect
 
