@@ -73,6 +73,10 @@ class Arc:
             for obj in cls.objects:
                 obj.updateABC()
 
+    @classmethod
+    def removeAll(cls):
+        cls.objects = []
+
     def setLeftEdge(self, side_arc, start=None):
         if start is None:
             start_x = self.focus.x

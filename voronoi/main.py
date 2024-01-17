@@ -1,16 +1,13 @@
 from .priorityQueue import PriorityQueue
 from .dataStructures import *
-from .util import *
+from .utils import *
 from .myLL import myLL
 from .visualizer.main import Visualizer
 
 
 class Voronoi:
-    def __init__(self, points):
-        self.points = list(map(lambda p: Point(*p), points))
-
-        self.box = []
-        self.__init_box()
+    def __init__(self) -> None:
+        self.withVisualisation = True
 
     def __init_box(self):
         points = self.points
@@ -39,28 +36,31 @@ class Voronoi:
                              for i in range(len(x_box))], fill=False, color="black")
         self.vis.add_point([(p.x, p.y) for p in self.points])
 
-    def __init_data(self):
+    def __init_data(self, points):
+        self.points = list(map(lambda p: Point(*p), points))
+        self.box = []
+        self.__init_box()
         self.Q = PriorityQueue()
         # self.T = Beachline()
         self.T = myLL()
         self.D = []
         self.starts = {}
 
-    def get_voronoi(self):
-        self.withVisualisation = False
-        voronoi_edges, box, _ = self.get_voronoi_visualised()
+    def get_voronoi(self, points):
+        self.withWithVisualisation = False
+        voronoi_edges, box, _ = self.get_voronoi_visualised(points)
+        self.withVisualisation = True
         return voronoi_edges, box
 
-    def get_voronoi_visualised(self):
-        self.withVisualisation = True
-        self.__init_data()
+    def get_voronoi_visualised(self, points):
+        self.__init_data(points)
         Q = self.Q
         if self.withVisualisation:
             self.vis = Visualizer()
-            vis = self.vis
             self.__drawBox()
         else:
             self.vis = None
+        vis = self.vis
         allVertical = len(set(map(lambda p: p.x, self.points))) == 1
         if allVertical:
             self.__handleVerticalPoints()
@@ -115,6 +115,7 @@ class Voronoi:
         if self.withVisualisation:
             for start, end in voronoi_edges:
                 vis.add_line_segment((start, end))
+        Arc.removeAll()
         return voronoi_edges, self.box, vis
 
     def __handleSiteEvent(self, p):

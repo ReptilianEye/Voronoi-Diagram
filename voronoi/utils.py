@@ -1,4 +1,5 @@
 from .dataStructures import Point
+import numpy as np
 
 
 def distance(p1: Point, p2: Point):
@@ -43,3 +44,7 @@ def lineSegmentIntersect(start: Point, end: Point, line_start: Point, line_direc
     if 0 <= t <= 1 and 0 <= u:
         return Point(x1 + t*(x2-x1), y1 + t*(y2-y1))
     return None
+
+
+def generate_uniform_points(left, right, n=10 ** 5):
+    return [np.random.uniform(left, right, 2) for _ in range(n)]

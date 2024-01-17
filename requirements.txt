@@ -23,6 +23,7 @@ fastjsonschema==2.19.0
 fonttools==4.45.0
 fqdn==1.5.1
 idna==3.4
+import-ipynb==0.1.4
 importlib-metadata==6.8.0
 importlib-resources==6.1.1
 ipykernel==6.27.0
