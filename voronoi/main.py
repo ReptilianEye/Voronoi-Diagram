@@ -1,8 +1,8 @@
-from priorityQueue import PriorityQueue
-from dataStructures import *
-from util import *
-from myLL import myLL
-from visualizer.main import Visualizer
+from .priorityQueue import PriorityQueue
+from .dataStructures import *
+from .util import *
+from .myLL import myLL
+from .visualizer.main import Visualizer
 
 
 class Voronoi:

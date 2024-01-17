@@ -1,4 +1,4 @@
-from dataStructures import Point
+from .dataStructures import Point
 
 
 def distance(p1: Point, p2: Point):
