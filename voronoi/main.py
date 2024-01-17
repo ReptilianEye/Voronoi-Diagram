@@ -8,6 +8,7 @@ from .visualizer.main import Visualizer
 class Voronoi:
     def __init__(self) -> None:
         self.withVisualisation = True
+        self.wait_time = 2  # how many seconds to wait between each step
 
     def __init_box(self):
         points = self.points
@@ -52,10 +53,12 @@ class Voronoi:
         self.withVisualisation = True
         return voronoi_edges, box
 
-    def get_voronoi_visualised(self, points):
+    def get_voronoi_visualised(self, points, wait_time=2):
         self.__init_data(points)
+
         Q = self.Q
         if self.withVisualisation:
+            self.wait_time = wait_time
             self.vis = Visualizer()
             self.__drawBox()
         else:
@@ -94,6 +97,7 @@ class Voronoi:
                 broom = vis.add_line(
                     [(min_x, y), (max_x, y)], color="red")
                 parabolas = self.__drawParabolas()
+                self.wait()
             if event.type == SITE_EVENT:
                 self.__handleSiteEvent(event.point)
             else:
@@ -117,6 +121,14 @@ class Voronoi:
                 vis.add_line_segment((start, end))
         Arc.removeAll()
         return voronoi_edges, self.box, vis
+
+    def wait(self):
+        time = self.wait_time
+        bottom_left = self.box[0]
+        for _ in range(time):
+            p = self.vis.add_point(
+                (bottom_left.x, bottom_left.y), s=0.001, color='black')
+            self.vis.remove_figure(p)
 
     def __handleSiteEvent(self, p):
         T = self.T
