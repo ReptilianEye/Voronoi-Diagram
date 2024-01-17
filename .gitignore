@@ -22,6 +22,8 @@ __pycache__/
 .vscode/
 
 env
-
-data
+test
 *.txt
+*.in
+*.out
+*.csv
