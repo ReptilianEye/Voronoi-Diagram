@@ -20,3 +20,5 @@ __pycache__/
 
 # Ignore Visual Studio Code workspace settings
 .vscode/
+
+env

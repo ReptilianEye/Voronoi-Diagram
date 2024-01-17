@@ -1,5 +1,5 @@
 import heapq
-from dataStructures import Event
+from .dataStructures import Event
 
 
 class PriorityQueue(object):
