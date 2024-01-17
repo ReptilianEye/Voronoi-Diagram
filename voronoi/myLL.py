@@ -1,6 +1,6 @@
 from .TInterface import T
 from .dataStructures import *
-from .util import *
+from .utils import *
 
 
 class myLL(T):
