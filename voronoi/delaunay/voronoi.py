@@ -1,5 +1,5 @@
 from voronoi.delaunay.utils import Point, Triangle, mat_det_3x3
-from voronoi.delaunay.delaunay import Triangulation, get_points
+from voronoi.delaunay.delaunay import get_points
 
 
 class Voronoi:

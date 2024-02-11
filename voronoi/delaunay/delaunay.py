@@ -1,8 +1,4 @@
-from voronoi.visualizer.main import Visualizer
-# from voronoi.delaunay.utils import Point, Triangle, mat_det_3x3
 from voronoi.delaunay.utils import Point, Triangle, mat_det_3x3
-
-EPS = 1e-8
 
 
 class Triangulation:
